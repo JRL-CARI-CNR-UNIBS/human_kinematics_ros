@@ -11,6 +11,9 @@
 
   <depend>rclcpp</depend>
   <depend>human_model</depend>
+  <depend>zed_interfaces</depend>
+
+  <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -9,6 +9,7 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(human_model REQUIRED)
+find_package(zed_interfaces REQUIRED)
 
 
 ### ${PROJECT_NAME} LIBRARY ###
@@ -27,6 +28,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${zed_interfaces_INCLUDE_DIRS}
 )
 
 # define the ${PROJECT_NAME} target as an alias to the actual target
@@ -61,8 +63,8 @@ target_compile_features(human_kinematics_node PUBLIC c_std_99 cxx_std_17)  # Req
 
 ### INSTALLATION ###
 # Install the include directory
-install(
-  DIRECTORY include/${PROJECT_NAME}
+install(DIRECTORY
+  include/${PROJECT_NAME}
   DESTINATION include
 )
 
@@ -101,6 +103,13 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   DESTINATION "share/${PROJECT_NAME}/cmake"
 )
+
+# Install launch files
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ### INSTALLATION ###
 
 

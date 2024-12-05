@@ -3,8 +3,8 @@
 
 int main(int argc, char * argv[])
 {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<HumanKinematicsPublisher>());
-  rclcpp::shutdown();
+  // rclcpp::init(argc, argv);
+  // rclcpp::spin(std::make_shared<HumanKinematicsPublisher>());
+  // rclcpp::shutdown();
   return 0;
 }
