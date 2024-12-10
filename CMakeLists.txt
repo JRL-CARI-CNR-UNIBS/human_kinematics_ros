@@ -8,8 +8,11 @@ set(CMAKE_BUILD_TYPE Release)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(human_model REQUIRED)
 find_package(zed_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 
 ### ${PROJECT_NAME} LIBRARY ###
@@ -18,17 +21,29 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/human_kinematics_publisher.cpp
 )
   
-# link the ${PROJECT_NAME} target against the required libraries
+# link the ${PROJECT_NAME} target against the required libraries (pure C++ libraries)
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  rclcpp::rclcpp
   human_model::human_model
+)
+
+# link the ${PROJECT_NAME} target against the required libraries (ROS2 libraries)
+ament_target_dependencies(${PROJECT_NAME} PUBLIC
+  rclcpp
+  tf2_ros
+  zed_interfaces
+  std_msgs
+  geometry_msgs  
 )
 
 # define the include directories for the ${PROJECT_NAME} target
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${rclcpp_INCLUDE_DIRS}
+  ${tf2_ros_INCLUDE_DIRS}
   ${zed_interfaces_INCLUDE_DIRS}
+  ${std_msgs_INCLUDE_DIRS}
+  ${geometry_msgs_INCLUDE_DIRS}
 )
 
 # define the ${PROJECT_NAME} target as an alias to the actual target
@@ -63,20 +78,36 @@ target_compile_features(human_kinematics_node PUBLIC c_std_99 cxx_std_17)  # Req
 
 ### INSTALLATION ###
 # Install the include directory
-install(DIRECTORY
-  include/${PROJECT_NAME}
+install(
+  DIRECTORY include/
   DESTINATION include
 )
 
 # Install the library
 install(
-  TARGETS
-    ${PROJECT_NAME}
-    human_kinematics_node
+  TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}Targets
-  ARCHIVE DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib/${PROJECT_NAME}
-  RUNTIME DESTINATION bin/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# Export the library target
+ament_export_targets(${PROJECT_NAME}Targets HAS_LIBRARY_TARGET)
+
+# Export the dependencies of the library
+ament_export_dependencies(
+  rclcpp
+  tf2_ros
+  zed_interfaces
+  std_msgs
+  geometry_msgs
+)
+
+# Install the executable
+install(
+  TARGETS human_kinematics_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install the export so that other CMake projects can find the library

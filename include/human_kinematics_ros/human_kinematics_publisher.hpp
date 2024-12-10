@@ -1,52 +1,71 @@
 #pragma once
 
-#include "human_model/human_model.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "zed_interfaces/msg/skeleton3_d.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <human_model/human_model.hpp>
+#include <zed_interfaces/msg/objects_stamped.hpp>
+#include <zed_interfaces/msg/keypoint3_d.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
+
+#define N_DOF 28
+#define N_PARAM 8
 
 
-class SkeletonSubscriber : public rclcpp::Node
+namespace human_kinematics_ros
 {
-public:
-  SkeletonSubscriber()
-  : Node("skeleton_subscriber")
-  {
-    subscription_ = this->create_subscription<zed_interfaces::msg::MISSINGGGGGGGGGGGGGGGGGGGGGG>(
-      "/zed/zed_node/body_trk/skeletons", 10,
-      std::bind(&SkeletonSubscriber::topic_callback, this, std::placeholders::_1));
-  }
-
-private:
-  void topic_callback(const std_msgs::msg::String::SharedPtr msg) const
-  {
-    RCLCPP_INFO(this->get_logger(), "Received message: '%s'", msg->data.c_str());
-  }
-
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
-};
-
 
 class HumanKinematicsPublisher : public rclcpp::Node
 {
 public:
-  HumanKinematicsPublisher()
-  : Node("human_kinematics_publisher")
-  {
-    publisher_ = this->create_publisher<std_msgs::msg::String>("/zed/zed_node/body_trk/skeletons", 10);
-    timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(500),
-      std::bind(&HumanKinematicsPublisher::timer_callback, this));
-  }
+  HumanKinematicsPublisher();
 
 private:
-  void timer_callback()
-  {
-      auto message = std_msgs::msg::String();
-      message.data = "Hello, world!";
-      RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-      publisher_->publish(message);
-  }
-  
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  rclcpp::Subscription<zed_interfaces::msg::ObjectsStamped>::ConstSharedPtr skeleton_subscription_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+	rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr configuration_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr param_publisher_;
+
+  std_msgs::msg::Header current_header_;
+
+	// Keypoints from the ZED camera in camera frame
+  std::vector<zed_interfaces::msg::Keypoint3D> zed_kpts_;
+
+	// 3D Transformations
+	Eigen::Affine3d TF_world_camera_;
+	Eigen::Affine3d T_ext_rshoulder;
+  Eigen::Affine3d T_ext_lshoulder;
+  Eigen::Affine3d T_ext_rhip;
+  Eigen::Affine3d T_ext_lhip;
+  Eigen::Affine3d T_ext_chest;
+  Eigen::Affine3d T_ext_head;
+  Eigen::Affine3d T_ext_relbow;
+  Eigen::Affine3d T_ext_rwrist;
+  Eigen::Affine3d T_ext_lelbow;
+  Eigen::Affine3d T_ext_lwrist;
+  Eigen::Affine3d T_ext_rknee;
+  Eigen::Affine3d T_ext_rankle;
+  Eigen::Affine3d T_ext_lknee;
+  Eigen::Affine3d T_ext_lankle;
+
+	// Human model
+  human_model::keypoints keypoints_;
+	human_model::Human28DOF human_model_;
+	std::vector<human_model::JointLimits> joint_limits_;
+	Eigen::VectorXd configuration_;
+	Eigen::VectorXd param_;
+
+	// Body geometrical transformations
+	std::map<std::string, geometry_msgs::msg::TransformStamped> body_transforms_;
+
+	void skeleton_callback(const zed_interfaces::msg::ObjectsStamped::ConstSharedPtr msg);
+	void publish_transforms();
+	void publish_configuration_and_param();
+	geometry_msgs::msg::TransformStamped affine3d_to_tf(const Eigen::Affine3d& T,
+                                                      const std::string& parent_frame,
+                                                      const std::string& child_frame);
 };
+
+} // end namespace human_kinematics_ros
