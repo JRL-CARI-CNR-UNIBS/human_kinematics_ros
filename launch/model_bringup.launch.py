@@ -7,11 +7,11 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # Get the path to the display_zed_cam.launch.py file
-    zed_display_launch_file = os.path.join(
-        get_package_share_directory('zed_display_rviz2'),
-        'launch',
-        'display_zed_cam.launch.py'
-    )
+    # zed_display_launch_file = os.path.join(
+    #     get_package_share_directory('zed_display_rviz2'),
+    #     'launch',
+    #     'display_zed_cam.launch.py'
+    # )
 
     return LaunchDescription([
         # # Launch the display_zed_cam.launch.py file
@@ -24,6 +24,9 @@ def generate_launch_description():
         Node(
             package='human_kinematics_ros',
             executable='human_kinematics_node',
-            name='human_kinematics_node'
+            name='human_kinematics_node',
+            output='screen',
+            parameters=[{'use_sim_time': False}],
+            arguments=['--ros-args', '--log-level', 'INFO']
         ),
     ])

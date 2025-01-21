@@ -11,7 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>human_model</depend>
-  <depend>zed_interfaces</depend>
+  <depend>zed_msgs</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

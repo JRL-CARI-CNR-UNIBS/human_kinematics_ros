@@ -5,15 +5,24 @@ get_project_name("package.xml" extracted_name extracted_version)
 project(${extracted_name} VERSION ${extracted_version} LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Release)
 
+# define ROS2 dependencies
+set(ROS2_DEPENDENCIES
+  rclcpp
+  tf2_ros
+  zed_msgs
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(human_model REQUIRED)
-find_package(zed_interfaces REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 
+# find all ROS 2 dependencies
+foreach(Dependency IN LISTS ROS2_DEPENDENCIES)
+  find_package(${Dependency} REQUIRED)
+endforeach()
 
 ### ${PROJECT_NAME} LIBRARY ###
 # declare the ${PROJECT_NAME} target library
@@ -27,23 +36,16 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 )
 
 # link the ${PROJECT_NAME} target against the required libraries (ROS2 libraries)
-ament_target_dependencies(${PROJECT_NAME} PUBLIC
-  rclcpp
-  tf2_ros
-  zed_interfaces
-  std_msgs
-  geometry_msgs  
-)
+ament_target_dependencies(${PROJECT_NAME} PUBLIC ${ROS2_DEPENDENCIES})
 
 # define the include directories for the ${PROJECT_NAME} target
+# (the ament_target_dependencies function is used to handle
+#  the include directories for the ROS 2 dependencies,
+#  so you don't need to manually specify them
+#  in the target_include_directories section)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  ${rclcpp_INCLUDE_DIRS}
-  ${tf2_ros_INCLUDE_DIRS}
-  ${zed_interfaces_INCLUDE_DIRS}
-  ${std_msgs_INCLUDE_DIRS}
-  ${geometry_msgs_INCLUDE_DIRS}
 )
 
 # define the ${PROJECT_NAME} target as an alias to the actual target
@@ -96,13 +98,7 @@ install(
 ament_export_targets(${PROJECT_NAME}Targets HAS_LIBRARY_TARGET)
 
 # Export the dependencies of the library
-ament_export_dependencies(
-  rclcpp
-  tf2_ros
-  zed_interfaces
-  std_msgs
-  geometry_msgs
-)
+ament_export_dependencies(${ROS2_DEPENDENCIES})
 
 # Install the executable
 install(
