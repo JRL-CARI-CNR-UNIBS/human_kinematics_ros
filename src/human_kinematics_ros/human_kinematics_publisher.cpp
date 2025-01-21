@@ -20,8 +20,8 @@ HumanKinematicsPublisher::HumanKinematicsPublisher()
   try {
     // Add a delay to ensure the transform is available
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    
-    transform_stamped = tf_buffer.lookupTransform("world", "zed_camera_link", tf2::TimePointZero);
+
+    transform_stamped = tf_buffer.lookupTransform("world", "zed_left_camera_frame", tf2::TimePointZero);
     T_world_camera_.translation() << transform_stamped.transform.translation.x,
                                      transform_stamped.transform.translation.y,
                                      transform_stamped.transform.translation.z;
