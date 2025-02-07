@@ -18,9 +18,20 @@ namespace human_kinematics_ros
 class HumanKinematicsPublisher : public rclcpp::Node
 {
 public:
-  HumanKinematicsPublisher();
+  HumanKinematicsPublisher(const std::string& node_name,
+                           const std::string& origin_frame,
+                           const std::string& camera_frame,
+                           const std::string& configuration_topic_name,
+                           const std::string& param_topic_name,
+                           const std::string& keypoints_topic_name);
 
 private:
+  std::string origin_frame_;
+  std::string camera_frame_;
+  std::string configuration_topic_name_;
+  std::string param_topic_name_;
+  std::string keypoints_topic_name_;
+
   rclcpp::Subscription<zed_msgs::msg::ObjectsStamped>::ConstSharedPtr skeleton_subscription_;
 
 	rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr configuration_publisher_;
@@ -43,12 +54,16 @@ private:
   Eigen::Affine3d T_ext_lhip_;
   Eigen::Affine3d T_ext_chest_;
   Eigen::Affine3d T_ext_head_;
+  Eigen::Affine3d T_ext_rshoulderRotated_;
   Eigen::Affine3d T_ext_relbow_;
   Eigen::Affine3d T_ext_rwrist_;
+  Eigen::Affine3d T_ext_lshoulderRotated_;
   Eigen::Affine3d T_ext_lelbow_;
   Eigen::Affine3d T_ext_lwrist_;
+  Eigen::Affine3d T_ext_rhipRotated_;
   Eigen::Affine3d T_ext_rknee_;
   Eigen::Affine3d T_ext_rankle_;
+  Eigen::Affine3d T_ext_lhipRotated_;
   Eigen::Affine3d T_ext_lknee_;
   Eigen::Affine3d T_ext_lankle_;
 
@@ -61,13 +76,15 @@ private:
 
 	// Body geometrical transformations
 	std::map<std::string, geometry_msgs::msg::TransformStamped> body_transforms_;
+  std::map<std::string, bool> body_transforms_nan_;
 
 	void skeleton_callback(const zed_msgs::msg::ObjectsStamped::ConstSharedPtr msg);
 	void publish_transforms();
 	void publish_configuration_and_param();
 	geometry_msgs::msg::TransformStamped affine3d_to_tf(const Eigen::Affine3d& T,
                                                       const std::string& parent_frame,
-                                                      const std::string& child_frame);
+                                                      const std::string& child_frame,
+                                                      bool& has_nan);
 };
 
 } // end namespace human_kinematics_ros
