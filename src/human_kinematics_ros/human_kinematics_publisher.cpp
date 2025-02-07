@@ -5,20 +5,41 @@
 namespace human_kinematics_ros
 {
 
-HumanKinematicsPublisher::HumanKinematicsPublisher(const std::string& node_name,
-                                                   const std::string& origin_frame,
-                                                   const std::string& camera_frame,
-                                                   const std::string& configuration_topic_name,
-                                                   const std::string& param_topic_name,
-                                                   const std::string& keypoints_topic_name)
-  : Node(node_name),
-    origin_frame_(origin_frame),
-    camera_frame_(camera_frame),
-    configuration_topic_name_(configuration_topic_name),
-    param_topic_name_(param_topic_name),
-    keypoints_topic_name_(keypoints_topic_name)
-
+HumanKinematicsPublisher::HumanKinematicsPublisher() : Node("human_kinematics_publisher")
 {
+  // Declare parameters
+  this->declare_parameter<std::string>("origin_frame", origin_frame_);
+  this->declare_parameter<std::string>("camera_frame", camera_frame_);
+  this->declare_parameter<std::string>("configuration_topic_name", configuration_topic_name_);
+  this->declare_parameter<std::string>("param_topic_name", param_topic_name_);
+  this->declare_parameter<std::string>("keypoints_topic_name", keypoints_topic_name_);
+
+  // Get parameters
+  if(this->get_parameter("origin_frame", origin_frame_) && !origin_frame_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter origin_frame: %s", origin_frame_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter origin_frame");
+
+  if(this->get_parameter("camera_frame", camera_frame_) && !camera_frame_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter camera_frame: %s", camera_frame_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter camera_frame");
+
+  if(this->get_parameter("configuration_topic_name", configuration_topic_name_) && !configuration_topic_name_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter configuration_topic_name: %s", configuration_topic_name_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter configuration_topic_name");
+
+  if(this->get_parameter("param_topic_name", param_topic_name_) && !param_topic_name_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter param_topic_name: %s", param_topic_name_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter param_topic_name");
+  
+  if(this->get_parameter("keypoints_topic_name", keypoints_topic_name_) && !keypoints_topic_name_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter keypoints_topic_name: %s", keypoints_topic_name_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter keypoints_topic_name");
+
   // Subscribe to the ZED skeleton topic
   skeleton_subscription_ = this->create_subscription<zed_msgs::msg::ObjectsStamped>(
     keypoints_topic_name_, 10,

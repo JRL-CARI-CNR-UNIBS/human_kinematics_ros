@@ -18,12 +18,7 @@ namespace human_kinematics_ros
 class HumanKinematicsPublisher : public rclcpp::Node
 {
 public:
-  HumanKinematicsPublisher(const std::string& node_name,
-                           const std::string& origin_frame,
-                           const std::string& camera_frame,
-                           const std::string& configuration_topic_name,
-                           const std::string& param_topic_name,
-                           const std::string& keypoints_topic_name);
+  HumanKinematicsPublisher();
 
 private:
   std::string origin_frame_;
