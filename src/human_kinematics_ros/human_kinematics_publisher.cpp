@@ -12,6 +12,7 @@ HumanKinematicsPublisher::HumanKinematicsPublisher() : Node("human_kinematics_pu
   this->declare_parameter<std::string>("camera_frame", camera_frame_);
   this->declare_parameter<std::string>("configuration_topic_name", configuration_topic_name_);
   this->declare_parameter<std::string>("param_topic_name", param_topic_name_);
+  this->declare_parameter<std::string>("chest_q_rotated_topic_name", chest_q_rotated_topic_name_);
   this->declare_parameter<std::string>("keypoints_topic_name", keypoints_topic_name_);
 
   // Get parameters
@@ -34,6 +35,11 @@ HumanKinematicsPublisher::HumanKinematicsPublisher() : Node("human_kinematics_pu
     RCLCPP_INFO(this->get_logger(), "Parameter param_topic_name: %s", param_topic_name_.c_str());
   else
     RCLCPP_FATAL(this->get_logger(), "Failed to get parameter param_topic_name");
+
+  if(this->get_parameter("chest_q_rotated_topic_name", chest_q_rotated_topic_name_) && !chest_q_rotated_topic_name_.empty())
+    RCLCPP_INFO(this->get_logger(), "Parameter chest_q_rotated_topic_name: %s", chest_q_rotated_topic_name_.c_str());
+  else
+    RCLCPP_FATAL(this->get_logger(), "Failed to get parameter chest_q_rotated_topic_name");
   
   if(this->get_parameter("keypoints_topic_name", keypoints_topic_name_) && !keypoints_topic_name_.empty())
     RCLCPP_INFO(this->get_logger(), "Parameter keypoints_topic_name: %s", keypoints_topic_name_.c_str());
@@ -119,6 +125,7 @@ HumanKinematicsPublisher::HumanKinematicsPublisher() : Node("human_kinematics_pu
   // Publish the configuration and param messages
   configuration_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("~/"+configuration_topic_name_, 10);
   param_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("~/"+param_topic_name_, 10);
+  chest_q_rotated_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("~/"+chest_q_rotated_topic_name_, 10);
   configuration_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(100),
     std::bind(&HumanKinematicsPublisher::publish_configuration_and_param, this)
@@ -203,7 +210,7 @@ void HumanKinematicsPublisher::skeleton_callback(const zed_msgs::msg::ObjectsSta
 
       // Call the inverse kinematics
       const Eigen::VectorXd prev_configuration = configuration_;
-      human_model_.ik(keypoints_, joint_limits_, prev_configuration, configuration_, param_);  
+      human_model_.ik(keypoints_, joint_limits_, prev_configuration, configuration_, param_, chest_q_rotated_);  
 
       // Compute the transformations applying the forward kinematics
       human_model_.fk_tfs(
@@ -287,9 +294,22 @@ void HumanKinematicsPublisher::publish_configuration_and_param()
   param_msg.position.resize(param_.size());
   Eigen::VectorXd::Map(&param_msg.position[0], param_.size()) = param_;
 
+  // Create a JointState message for the chest_q_rotated data
+  sensor_msgs::msg::JointState chest_q_rotated_msg;
+  chest_q_rotated_msg.header.stamp = this->now();
+  chest_q_rotated_msg.name = {
+    "chest_q_rotated_x",
+    "chest_q_rotated_y",
+    "chest_q_rotated_z",
+    "chest_q_rotated_w"
+  };
+  chest_q_rotated_msg.position.resize(chest_q_rotated_.size());
+  Eigen::VectorXd::Map(&chest_q_rotated_msg.position[0], chest_q_rotated_.size()) = chest_q_rotated_;
+
   // Publish the messages
   configuration_publisher_->publish(config_msg);
   param_publisher_->publish(param_msg);
+  chest_q_rotated_publisher_->publish(chest_q_rotated_msg);
 }
 
 

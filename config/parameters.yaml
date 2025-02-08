@@ -5,4 +5,5 @@ human_kinematics_publisher:
     camera_frame: "zed_left_camera_frame"
     configuration_topic_name: "body_configuration"
     param_topic_name: "body_parameters"
+    chest_q_rotated_topic_name: "chest_q_rotated"
     keypoints_topic_name: "/zed/zed_node/body_trk/skeletons"

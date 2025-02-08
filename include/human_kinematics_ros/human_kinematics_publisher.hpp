@@ -25,12 +25,14 @@ private:
   std::string camera_frame_;
   std::string configuration_topic_name_;
   std::string param_topic_name_;
+  std::string chest_q_rotated_topic_name_;
   std::string keypoints_topic_name_;
 
   rclcpp::Subscription<zed_msgs::msg::ObjectsStamped>::ConstSharedPtr skeleton_subscription_;
 
 	rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr configuration_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr param_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr chest_q_rotated_publisher_;
   rclcpp::TimerBase::SharedPtr configuration_timer_;
 
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -68,6 +70,7 @@ private:
 	std::vector<human_model::JointLimits> joint_limits_;
 	Eigen::VectorXd configuration_ = Eigen::VectorXd::Zero(N_DOF);
 	Eigen::VectorXd param_ = Eigen::VectorXd::Zero(N_PARAM);
+  Eigen::Vector4d chest_q_rotated_ = Eigen::Vector4d::Zero();
 
 	// Body geometrical transformations
 	std::map<std::string, geometry_msgs::msg::TransformStamped> body_transforms_;
