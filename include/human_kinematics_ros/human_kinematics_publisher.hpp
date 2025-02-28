@@ -69,6 +69,7 @@ private:
 	human_model::Human28DOF human_model_;
 	std::vector<human_model::JointLimits> joint_limits_;
 	Eigen::VectorXd configuration_ = Eigen::VectorXd::Zero(N_DOF);
+  Eigen::VectorXd previous_configuration_ = Eigen::VectorXd::Zero(N_DOF);
 	Eigen::VectorXd param_ = Eigen::VectorXd::Zero(N_PARAM);
   Eigen::Vector4d chest_q_rotated_ = Eigen::Vector4d::Zero();
 

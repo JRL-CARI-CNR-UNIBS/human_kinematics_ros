@@ -73,54 +73,11 @@ HumanKinematicsPublisher::HumanKinematicsPublisher() : Node("human_kinematics_pu
   }
 
   // Instantiate the human model
+  // #TODO: IS IT FINE TO INSTANTIATE A CLASS WITH ONLY STATIC METHODS?
   human_model_ = human_model::Human28DOF();
 
   // Set the joint limits
-  joint_limits_.resize(N_DOF, human_model::JointLimits(-M_PI, M_PI));
-
-  // Set the chest translation and rotation limits -> NOT USED BY THE HUMAN MODEL
-  joint_limits_[0] = human_model::JointLimits( 0.0, 2.0);               // q0_chest_x
-  joint_limits_[1] = human_model::JointLimits(-2.5, 2.5);               // q1_chest_y
-  joint_limits_[2] = human_model::JointLimits( 0.8, 1.8);               // q2_chest_z
-  joint_limits_[3] = human_model::JointLimits(-1.0, 1.0);               // q3_chest_qx
-  joint_limits_[4] = human_model::JointLimits(-1.0, 1.0);               // q4_chest_qy
-  joint_limits_[5] = human_model::JointLimits(-1.0, 1.0);               // q5_chest_qz
-  joint_limits_[6] = human_model::JointLimits(-1.0, 1.0);               // q6_chest_qw
-  
-  // Set the shoulder axis limits    
-  joint_limits_[7] = human_model::JointLimits(-M_PI / 4, M_PI / 4);     // q7_shoulder_rotx
-  
-  // Set the hip axis limits    
-  joint_limits_[8] = human_model::JointLimits(-M_PI / 2, M_PI / 2);     // q8_hip_rotz
-  joint_limits_[9] = human_model::JointLimits(-M_PI / 4, M_PI / 4);     // q9_hip_rotx
-
-  // Set the right and left shoulder limits 
-  joint_limits_[10] = human_model::JointLimits(-M_PI, M_PI/2 );         // q10_rshoulder_rotz
-  joint_limits_[11] = human_model::JointLimits(-M_PI, 0.0);             // q11_rshoulder_rotx
-  joint_limits_[12] = human_model::JointLimits(-0.75*M_PI, 0.75*M_PI);  // q12_rshoulder_roty
-  joint_limits_[14] = human_model::JointLimits(-M_PI, M_PI/2 );         // q14_lshoulder_rotz
-  joint_limits_[15] = human_model::JointLimits(-M_PI, 0.0);             // q15_lshoulder_rotx
-  joint_limits_[16] = human_model::JointLimits(-0.75*M_PI, 0.75*M_PI);  // q16_lshoulder_roty
-  
-  // Set the right and left elbow limits 
-  joint_limits_[13] = human_model::JointLimits(-M_PI, 0.0);             // q13_relbow_rotz
-  joint_limits_[17] = human_model::JointLimits(-M_PI, 0.0);             // q17_lelbow_rotz
-
-  // Set the right and left hip limits 
-  joint_limits_[18] = human_model::JointLimits(-M_PI/4, M_PI *.75);     // q18_rhip_rotz
-  joint_limits_[19] = human_model::JointLimits(-M_PI / 2, 0.0);         // q19_rhip_rotx
-  joint_limits_[20] = human_model::JointLimits(0.0, M_PI / 2);          // q20_rhip_roty
-  joint_limits_[22] = human_model::JointLimits(-M_PI/4, M_PI *.75);     // q22_lhip_rotz
-  joint_limits_[23] = human_model::JointLimits(-M_PI, 0.0);             // q23_lhip_rotx
-  joint_limits_[24] = human_model::JointLimits(0.0, M_PI / 2);          // q24_lhip_roty
-
-  // Set the right and left knee limits 
-  joint_limits_[21] = human_model::JointLimits(0.0, M_PI);              // q21_rknee_rotz
-  joint_limits_[25] = human_model::JointLimits(0.0, M_PI);              // q25_lknee_rotz
-
-  // Set the head limits
-  joint_limits_[26] = human_model::JointLimits(-M_PI / 2, M_PI / 2);    // q26_head_rotx
-  joint_limits_[27] = human_model::JointLimits(-M_PI / 2, M_PI / 2);    // q27_head_roty
+  human_model_.setDefaultJointLimits(joint_limits_);
 
   // Publish the configuration and param messages
   configuration_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("~/"+configuration_topic_name_, 10);
@@ -208,9 +165,12 @@ void HumanKinematicsPublisher::skeleton_callback(const zed_msgs::msg::ObjectsSta
 
       // RCLCPP_INFO(this->get_logger(), "Keypoints [WORLD FRAME]:\n%s", keypoints_.toString().c_str());
 
+      // Update the previous configuration only if configuration_ does not contain NaN values
+      if (!configuration_.array().isNaN().any())
+        previous_configuration_ = configuration_;
+      
       // Call the inverse kinematics
-      const Eigen::VectorXd prev_configuration = configuration_;
-      human_model_.ik(keypoints_, joint_limits_, prev_configuration, configuration_, param_, chest_q_rotated_);  
+      human_model_.ik(keypoints_, joint_limits_, previous_configuration_, configuration_, param_, chest_q_rotated_);  
 
       // Compute the transformations applying the forward kinematics
       human_model_.fk_tfs(
